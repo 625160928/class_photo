@@ -35,6 +35,7 @@ def get_create_time(filename):
   hour=None
   minitus=None
   second=None
+  # print(filename)
   fd = open(filename, 'rb')
   tags = exifread.process_file(fd)
   fd.close()
@@ -53,13 +54,41 @@ def get_create_time(filename):
 
   return year,month,day,hour,minitus,second
 
+
+def check_dir(input_dir_path,output_dir_path):
+    for filename_ori in os.listdir(input_dir_path):
+        filename= input_dir_path + filename_ori
+        if os.path.isfile(filename):
+            ed=filename.split('.')[2]
+            # print(ed)
+            if ed in ['jpg','JPG']:
+                year,month,day,hour,minitus,second=get_create_time(filename)
+                if year!=None:
+                    move_dir=output_dir_path+year+'_'+month+'/'
+                    if not os.path.exists(move_dir):
+                        os.mkdir(move_dir)
+                    print(filename,'  ---  ',move_dir+filename_ori)
+                    shutil.move(filename,move_dir+filename_ori)
+                else:
+                    print(filename,"           !!!!!!!!!!!!!!!!!!!!!!!!!")
+            elif ed in ['MOV','mov','mp4','MP4']:
+                pass
+                # print('mov ',filename)
+            elif ed in []:
+                pass
+            else:
+                pass
+                # print('unknow ',filename)
+        else:
+            check_dir(filename+'/',output_dir_path)
+
 def main():
     input_file_path='./input_files/'
-    for filename in os.listdir(input_file_path):
-        if os.path.isfile(filename):
-            year,month,day,hour,minitus,second=get_create_time(filename)
-            print(year,month,day,hour,minitus,second)
-        else:
+    output_file_path='./output_files/'
+    check_dir(input_dir_path=input_file_path,output_dir_path=output_file_path)
+
+
+
 
 
 if __name__ == '__main__':
