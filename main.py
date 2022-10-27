@@ -5,7 +5,8 @@ import time
 import shutil
 
 import datetime
-
+import warnings
+warnings.filterwarnings("ignore")
 def cmp_file(f1, f2):
     st1 = os.stat(f1)
     st2 = os.stat(f2)
@@ -125,6 +126,9 @@ def get_file_time_all( filename):
         year, month, day, hour, minitus, second = get_photo_create_time(filename)
     except:
         year, month, day, hour, minitus, second = get_file_time(filename)
+    if year==None:
+        year, month, day, hour, minitus, second = get_file_time(filename)
+
     # print(filename, year, month, day, hour, minitus, second)
     return year, month, day, hour, minitus, second
 
@@ -189,16 +193,18 @@ def move_in_file_all(input_dir_path, output_dir_path, move=False):
     all_number=len(input_file_list)
 
     for filename in input_file_list:
+        just_name=filename.split('/')[-1]
         #确认文件的移动位置
         year, month, day, hour, minitus, second = get_file_time_all( filename)
         if year !=None and month!=None:
-            file_to_path=output_dir_path+year+'_'+month
+            file_to_path=output_dir_path+year+'_'+month+'/'
         else:
             file_to_path=output_dir_path+'unknown/'
 
         if not os.path.exists(file_to_path):
             os.mkdir(file_to_path)
         # print(filename,file_to_path)
+
         #判断文件是否已经存在
         check_file_list=get_file_path_list(file_to_path)
         need_move=True
@@ -207,36 +213,77 @@ def move_in_file_all(input_dir_path, output_dir_path, move=False):
                 exist_number+=1
                 need_move=False
                 break
+        if need_move==False:
+            file_to_path = output_dir_path + 'copy/'
+            if not os.path.exists(file_to_path):
+                os.mkdir(file_to_path)
+
+        file_to_path+=just_name
 
         if not os.path.exists(file_to_path ):
             fin_path = file_to_path
+
         else:
-            k=file_to_path.split('.')
+            k=file_to_path.split('/')
             if len(k)!=1:
                 head=''
                 for i in range(len(k)-1):
-                    head+=k[i]
+                    head+=k[i]+'/'
 
                 tail=k[-1]
-                fin_path = head + str(time.time()) +'.'+ tail
+                # print(head,tail,'=======',k)
+                fin_path = head + str(time.time()) +'_'+ tail
             else:
-                tail=k[-1]
-                fin_path = tail+ str(time.time()) +'.png'
-        print()
+                break
+
+        print(need_move,filename, '  move to  ', fin_path)
+
         if move:
             #只有不存在的文件才需要移动
-            if need_move :
-                move_in_number+=1
-                shutil.move(filename, fin_path)
-                print(filename, '  move to  ', fin_path)
+            # if need_move :
+            move_in_number+=1
+            shutil.move(filename, fin_path)
+            print(filename, '  move to  ', fin_path)
 
 
     print(all_number,move_in_number,exist_number)
 
 
 
+def find_eq_file(input_dir_path, check_dir_path):
+    move_in_number=0
+    exist_number=0
+    ans=[]
+    input_file_list=get_file_path_list(input_dir_path)
+    all_number=len(input_file_list)
+
+    for filename in input_file_list:
+        tmp_eq=''
+        just_name=filename.split('/')[-1]
+        #确认文件的移动位置
+        year, month, day, hour, minitus, second = get_file_time_all( filename)
+        if year !=None and month!=None:
+            file_to_path= check_dir_path + year + '_' + month + '/'
+        else:
+            file_to_path= check_dir_path + 'unknown/'
+
+        # print(filename,file_to_path)
+
+        #判断文件是否已经存在
+        check_file_list=get_file_path_list(file_to_path)
+        for ck in check_file_list:
+            if cmp_file(ck,filename)==True:
+                tmp_eq=ck
+                break
+        if tmp_eq=='':
+            print(filename,' ======= ',tmp_eq,' ================= ',year , month )
+            ans.append([filename,' ======= ',tmp_eq,' ================= ',year , month])
+    return ans
+
+
+
 def main():
-    input_file_path='D:/Program Files (x86)/文档整理/unknown/'
+    input_file_path='D:/Program Files (x86)/文档整理/copy/'
     output_file_path='D:/Program Files (x86)/文档整理/输出/'
 
     input_file_path=input_file_path.replace('\\','/')
@@ -245,12 +292,14 @@ def main():
 
     # ans=move_file_all(input_dir_path=input_file_path, output_dir_path=output_file_path, move=True)
     # move_same_file_all(input_dir_path=input_file_path, output_dir_path=output_file_path, move=True)
-    move_in_file_all(input_dir_path=input_file_path, output_dir_path=output_file_path, move=False)
+    # move_in_file_all(input_dir_path=input_file_path, output_dir_path=output_file_path, move=True)
+    ans=find_eq_file(input_dir_path=input_file_path, check_dir_path=output_file_path)
 
-
-    # f1='D:\Program Files (x86)\文档整理\输出/2016_01/IMG_2692.JPG'
-    # f2='D:\Program Files (x86)\文档整理\输出/2016_01/1665848543.919962IMG_2692.JPG'
-    #
-    # print(cmp_file(f1,f2))
+    # print(get_file_time_all('D:/Program Files (x86)/文档整理/copy//2019_01_16_08_55_IMG_1610.MOV'))
+    # print(get_file_time('D:/Program Files (x86)/文档整理/copy//2019_01_16_08_55_IMG_1610.MOV'))
+    # for i in ans:
+    #     print(i)
+    # print('========')
+    # print(len(ans))
 if __name__ == '__main__':
     main()
